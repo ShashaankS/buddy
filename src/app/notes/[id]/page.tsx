@@ -4,8 +4,15 @@ import { createClient } from "@/utils/supabase/server";
 import { getNote } from "@/app/actions/notes";
 import NoteEditorClient from "./note-editor-client";
 
-export default async function NotePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function NotePage({ 
+  params,
+  searchParams,
+}: { 
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ folderId?: string }>;
+}) {
   const { id } = await params;
+  const { folderId } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -28,7 +35,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
       noteId={isNewNote ? undefined : id}
       initialTitle={note?.title || ""}
       initialContent={note?.content || null}
-      initialFolderId={note?.folderId || undefined}
+      initialFolderId={note?.folderId || folderId || undefined}
       initialTags={note?.tags || []}
       initialIsPinned={note?.isPinned || false}
     />

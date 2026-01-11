@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 export async function saveNote(data: {
   noteId?: string;
   title: string;
-  content: any; // TipTap JSON content
+  content?: string; // TipTap JSON content
   folderId?: string | null;
   tags?: string[];
   isPinned?: boolean;
@@ -25,21 +25,26 @@ export async function saveNote(data: {
 
     // If noteId exists, update existing note
     if (data.noteId) {
+      const updateData: any = {
+        folderId: data.folderId || null,
+        updatedAt: new Date(),
+      };
+
+      // Only update these fields if they are provided
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.content !== undefined) updateData.content = data.content;
+      if (data.tags !== undefined) updateData.tags = data.tags;
+      if (data.isPinned !== undefined) updateData.isPinned = data.isPinned;
+
       const [updatedNote] = await db
         .update(notes)
-        .set({
-          title: data.title,
-          content: data.content,
-          folderId: data.folderId || null,
-          tags: data.tags || [],
-          isPinned: data.isPinned || false,
-          updatedAt: new Date(),
-        })
+        .set(updateData)
         .where(eq(notes.id, data.noteId))
         .returning();
 
       revalidatePath("/");
       revalidatePath(`/notes/${data.noteId}`);
+      revalidatePath("/folders");
       
       return { success: true, note: updatedNote };
     }

@@ -123,11 +123,11 @@ export default async function DashboardPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <CardTitle className="truncate group-hover:text-primary transition-colors">
-                            {folder.title}
+                            {folder.name}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-1 mt-1">
                             <ClockIcon className="h-3 w-3" />
-                            {new Date(folder.createdAt).toLocaleDateString('en-US', { 
+                            {folder.createdAt && new Date(folder.createdAt).toLocaleDateString('en-US', { 
                               month: 'short', 
                               day: 'numeric' 
                             })}
@@ -180,28 +180,29 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {recentNotes.map((note) => (
                 <Link key={note.id} href={`/notes/${note.id}`}>
-                  <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 h-full">
+                    <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 h-full">
                     <CardHeader className="pb-3">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-500/10 group-hover:bg-green-500 transition-colors">
-                          <FileTextIcon className="h-4 w-4 text-green-600 group-hover:text-white transition-colors" />
-                        </div>
-                        <CardTitle className="text-base truncate group-hover:text-green-600 transition-colors">
-                          {note.title}
-                        </CardTitle>
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-500/10 group-hover:bg-green-500 transition-colors">
+                        <FileTextIcon className="h-4 w-4 text-green-600 group-hover:text-white transition-colors" />
+                      </div>
+                      <CardTitle className="text-base truncate group-hover:text-green-600 transition-colors">
+                        {note.title}
+                      </CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent className="pb-4">
+                      <p className="text-sm text-muted-foreground mb-2">{recentFolders.find(f => f.id === note.folderId)?.name || "No folder"}</p>
                       <CardDescription className="flex items-center gap-1 text-xs">
-                        <ClockIcon className="h-3 w-3" />
-                        {new Date(note.createdAt).toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
+                      <ClockIcon className="h-3 w-3" />
+                      {note.createdAt && new Date(note.createdAt).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
                       </CardDescription>
                     </CardContent>
-                  </Card>
+                    </Card>
                 </Link>
               ))}
             </div>

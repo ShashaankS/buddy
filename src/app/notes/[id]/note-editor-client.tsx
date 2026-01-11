@@ -26,6 +26,7 @@ export default function NoteEditorClient({
 }: NoteEditorClientProps) {
   const router = useRouter();
   const [currentNoteId, setCurrentNoteId] = useState(noteId);
+  const [folderId, setFolderId] = useState(initialFolderId);
 
   const handleSave = async (title: string, content: any) => {
     try {
@@ -33,7 +34,7 @@ export default function NoteEditorClient({
         noteId: currentNoteId,
         title,
         content, // This will be saved as JSON
-        folderId: initialFolderId,
+        folderId: folderId,
         tags: initialTags,
         isPinned: initialIsPinned,
       });
