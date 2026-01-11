@@ -33,11 +33,20 @@ import {
   Save,
   ArrowLeft,
   Clock,
+  Trash2,
+  FolderIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Tooltip,
   TooltipContent,
@@ -53,6 +62,11 @@ interface NoteEditorProps {
   initialTitle?: string;
   initialContent?: any;
   onSave?: (title: string, content: any) => Promise<void>;
+  currentFolderId?: string;
+  availableFolders?: Array<{ id: string; name: string; }>;
+  onFolderChange?: (folderId: string | undefined) => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 }
 
 export default function NoteEditor({
@@ -60,6 +74,11 @@ export default function NoteEditor({
   initialTitle = '',
   initialContent = null,
   onSave,
+  currentFolderId,
+  availableFolders = [],
+  onFolderChange,
+  onDelete,
+  isDeleting = false,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(initialTitle);
   const [isSaving, setIsSaving] = useState(false);
@@ -230,6 +249,37 @@ export default function NoteEditor({
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Folder Selector */}
+              {availableFolders.length > 0 && (
+                <Select
+                  value={currentFolderId || "none"}
+                  onValueChange={(value) => onFolderChange?.(value === "none" ? undefined : value)}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <div className="flex items-center gap-2">
+                      {/* <FolderIcon className="h-4 w-4" /> */}
+                      <SelectValue placeholder="No folder" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      <div className="flex items-center gap-2">
+                        <FolderIcon className="h-4 w-4" />
+                        No folder
+                      </div>
+                    </SelectItem>
+                    {availableFolders.map((folder) => (
+                      <SelectItem key={folder.id} value={folder.id}>
+                        <div className="flex items-center gap-2">
+                          <FolderIcon className="h-4 w-4" />
+                          {folder.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
               {/* Save Status */}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {saveStatus === 'saving' && (
@@ -260,6 +310,18 @@ export default function NoteEditor({
                 <Save className="h-4 w-4 mr-2" />
                 Save Now
               </Button>
+              
+              {noteId && onDelete && (
+                <Button
+                  onClick={onDelete}
+                  disabled={isDeleting}
+                  variant="destructive"
+                  size="sm"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+              )}
             </div>
           </div>
         </div>

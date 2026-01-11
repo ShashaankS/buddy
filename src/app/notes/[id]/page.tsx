@@ -2,6 +2,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getNote } from "@/app/actions/notes";
+import { db } from "@/db/index";
+import { folders } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import NoteEditorClient from "./note-editor-client";
 
 export default async function NotePage({ 
@@ -30,6 +33,15 @@ export default async function NotePage({
     }
   }
 
+  // Fetch user's folders for the folder selector
+  const userFolders = await db
+    .select({
+      id: folders.id,
+      name: folders.name,
+    })
+    .from(folders)
+    .where(eq(folders.userId, user.id));
+
   return (
     <NoteEditorClient 
       noteId={isNewNote ? undefined : id}
@@ -38,6 +50,7 @@ export default async function NotePage({
       initialFolderId={note?.folderId || folderId || undefined}
       initialTags={note?.tags || []}
       initialIsPinned={note?.isPinned || false}
+      availableFolders={userFolders}
     />
   );
 }
