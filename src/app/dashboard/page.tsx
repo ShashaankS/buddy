@@ -46,7 +46,7 @@ export default async function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-          <Link href="/dashboard/folder/create">
+          <Link href="/folders/create">
             <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/50">
               <CardHeader>
                 <div className="flex items-center gap-4">
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/dashboard/note/create">
+          <Link href={`/notes/new`}>
             <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-green-500/50">
               <CardHeader>
                 <div className="flex items-center gap-4">
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
               <h2 className="text-3xl font-bold tracking-tight">Recent Folders</h2>
             </div>
             <Button variant="ghost" asChild>
-              <Link href="/dashboard/folders" className="gap-2">
+              <Link href={`/folders`} className="gap-2">
                 View all
                 <ArrowRightIcon className="h-4 w-4" />
               </Link>
@@ -104,7 +104,7 @@ export default async function DashboardPage() {
                 <FolderIcon className="h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground mb-4">No folders yet. Create your first one!</p>
                 <Button asChild>
-                  <Link href="/dashboard/folder/create" className="gap-2">
+                  <Link href={`/folders/create`} className="gap-2">
                     <PlusIcon className="h-4 w-4" />
                     Create Folder
                   </Link>
@@ -114,7 +114,7 @@ export default async function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {recentFolders.map((folder) => (
-                <Link key={folder.id} href={`/dashboard/folder/${folder.id}`}>
+                <Link key={folder.id} href={`/folders/${folder.id}`}>
                   <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 h-full">
                     <CardHeader>
                       <div className="flex items-start gap-4">
@@ -156,7 +156,7 @@ export default async function DashboardPage() {
               <h2 className="text-3xl font-bold tracking-tight">Recent Notes</h2>
             </div>
             <Button variant="ghost" asChild>
-              <Link href="/dashboard/notes" className="gap-2">
+              <Link href={`/notes`} className="gap-2">
                 View all
                 <ArrowRightIcon className="h-4 w-4" />
               </Link>
@@ -169,7 +169,7 @@ export default async function DashboardPage() {
                 <FileTextIcon className="h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground mb-4">No notes yet. Start writing!</p>
                 <Button asChild variant="default">
-                  <Link href="/dashboard/note/create" className="gap-2">
+                  <Link href={`/notes/new`} className="gap-2">
                     <PlusIcon className="h-4 w-4" />
                     Create Note
                   </Link>
@@ -179,7 +179,7 @@ export default async function DashboardPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {recentNotes.map((note) => (
-                <Link key={note.id} href={`/dashboard/note/${note.id}`}>
+                <Link key={note.id} href={`/notes/${note.id}`}>
                   <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 h-full">
                     <CardHeader className="pb-3">
                       <div className="flex items-start gap-3">

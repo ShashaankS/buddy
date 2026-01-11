@@ -1,0 +1,1 @@
+export type contentType = 'text' | 'image' | 'code' | 'video' | 'audio' | 'other';
