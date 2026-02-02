@@ -30,6 +30,9 @@ export const notes = pgTable('notes', {
   tags: text('tags').array(),
   isPinned: boolean('is_pinned').default(false),
   isArchived: boolean('is_archived').default(false),
+  summary: text('summary'),
+  keyPoints: text('key_points').array(),
+  summaryWordCount: integer('summary_word_count'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 })

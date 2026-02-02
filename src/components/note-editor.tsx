@@ -35,6 +35,8 @@ import {
   Clock,
   Trash2,
   FolderIcon,
+  Sparkles,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -67,6 +69,7 @@ interface NoteEditorProps {
   onFolderChange?: (folderId: string | undefined) => void;
   onDelete?: () => void;
   isDeleting?: boolean;
+  onSummarize?: () => Promise<any>;
 }
 
 export default function NoteEditor({
@@ -79,11 +82,15 @@ export default function NoteEditor({
   onFolderChange,
   onDelete,
   isDeleting = false,
+  onSummarize,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(initialTitle);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const [showAISidebar, setShowAISidebar] = useState(false);
+  const [aiSummary, setAiSummary] = useState<any>(null);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const router = useRouter();
 
   const editor = useEditor({
@@ -187,6 +194,23 @@ export default function NoteEditor({
     }
   };
 
+  const handleSummarize = async () => {
+    if (!onSummarize || !editor) return;
+    
+    setIsGeneratingSummary(true);
+    setShowAISidebar(true);
+    
+    try {
+      const result = await onSummarize();
+      setAiSummary(result);
+    } catch (error) {
+      console.error('Failed to generate summary:', error);
+      setAiSummary({ error: 'Failed to generate summary' });
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
   const MenuButton = ({ 
     onClick, 
     isActive, 
@@ -225,7 +249,7 @@ export default function NoteEditor({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-3">
@@ -310,6 +334,18 @@ export default function NoteEditor({
                 <Save className="h-4 w-4 mr-2" />
                 Save Now
               </Button>
+
+              {noteId && onSummarize && (
+                <Button
+                  onClick={handleSummarize}
+                  disabled={isGeneratingSummary}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {isGeneratingSummary ? "Generating..." : "AI Summary"}
+                </Button>
+              )}
               
               {noteId && onDelete && (
                 <Button
@@ -463,11 +499,109 @@ export default function NoteEditor({
         </div>
       </div>
 
-      {/* Editor Content */}
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Card className="border-none shadow-none">
-          <EditorContent editor={editor} />
-        </Card>
+      {/* Editor Content with Sidebar */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Main Editor */}
+        <div className={cn(
+          "flex-1 overflow-y-auto transition-all duration-300",
+          showAISidebar ? "mr-96" : ""
+        )}>
+          <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <Card className="border-none shadow-none">
+              <EditorContent editor={editor} />
+            </Card>
+          </div>
+        </div>
+
+        {/* AI Sidebar */}
+        {showAISidebar && (
+          <div className="fixed right-0 top-0 h-full w-96 bg-muted/30 backdrop-blur-sm border-l shadow-lg overflow-y-auto z-40">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  <h2 className="text-lg font-semibold">AI Summary</h2>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAISidebar(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {isGeneratingSummary ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                  <p className="text-center text-sm text-muted-foreground">
+                    Analyzing your note...
+                  </p>
+                </div>
+              ) : aiSummary?.error ? (
+                <Card className="p-4 bg-destructive/10 border-destructive/20">
+                  <p className="text-sm text-destructive">{aiSummary.error}</p>
+                </Card>
+              ) : aiSummary ? (
+                <div className="space-y-4">
+                  {/* Summary */}
+                  <Card className="p-4">
+                    <h3 className="font-semibold mb-2 text-sm text-muted-foreground">Summary</h3>
+                    <p className="text-sm leading-relaxed">{aiSummary.summary}</p>
+                  </Card>
+
+                  {/* Key Points */}
+                  {aiSummary.keyPoints && aiSummary.keyPoints.length > 0 && (
+                    <Card className="p-4">
+                      <h3 className="font-semibold mb-3 text-sm text-muted-foreground">Key Points</h3>
+                      <ul className="space-y-2">
+                        {aiSummary.keyPoints.map((point: string, index: number) => (
+                          <li key={index} className="flex items-start gap-2 text-sm">
+                            <span className="text-primary mt-1">•</span>
+                            <span>{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                  )}
+
+                  {/* Stats */}
+                  {aiSummary.wordCount && (
+                    <Card className="p-4">
+                      <h3 className="font-semibold mb-2 text-sm text-muted-foreground">Stats</h3>
+                      <div className="flex items-center gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Words: </span>
+                          <span className="font-medium">{aiSummary.wordCount}</span>
+                        </div>
+                      </div>
+                    </Card>
+                  )}
+
+                  {/* Regenerate button */}
+                  <Button
+                    onClick={handleSummarize}
+                    variant="outline"
+                    className="w-full"
+                    size="sm"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Regenerate Summary
+                  </Button>
+                </div>
+              ) : (
+                <Card className="p-6 text-center">
+                  <Sparkles className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Click the AI Summary button to generate insights about your note.
+                  </p>
+                </Card>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -495,7 +629,7 @@ function debounce<T extends (...args: any[]) => any>(
     if (timeout) {
       clearTimeout(timeout);
       if (lastArgs) {
-        func.apply(null, lastArgs);
+        func(...lastArgs);
       }
       timeout = null;
       lastArgs = null;

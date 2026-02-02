@@ -3,9 +3,10 @@
 
 import NoteEditor from "@/components/note-editor";
 import { saveNote, deleteNote } from "@/app/actions/notes";
+import { summarizeNote } from "@/app/actions/ai";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner"; // Install: npm install sonner
+import { toast } from "sonner";
 
 interface NoteEditorClientProps {
   noteId?: string;
@@ -30,8 +31,12 @@ export default function NoteEditorClient({
   const [currentNoteId, setCurrentNoteId] = useState(noteId);
   const [folderId, setFolderId] = useState(initialFolderId);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [title, setTitle] = useState(initialTitle);
+  const [content, setContent] = useState(initialContent);
 
   const handleSave = async (title: string, content: any) => {
+    setTitle(title);
+    setContent(content);
     try {
       const result = await saveNote({
         noteId: currentNoteId,
@@ -111,6 +116,31 @@ export default function NoteEditorClient({
     }
   };
 
+  const handleSummarize = async () => {
+    if (!currentNoteId) {
+      toast.error("Please save the note first before generating summary");
+      return;
+    }
+
+    try {
+      const result = await summarizeNote(content, title, currentNoteId);
+      if (result.success) {
+        return {
+          summary: result.summary || "",
+          keyPoints: result.keyPoints || [],
+          wordCount: result.summary ? result.summary.trim().split(/\s+/).length : 0,
+        };
+      } else {
+        toast.error(result.error || "Failed to generate summary");
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error("Summarize error:", error);
+      toast.error("Failed to generate summary");
+      throw error;
+    }
+  };
+
   return (
     <NoteEditor
       noteId={currentNoteId}
@@ -122,6 +152,7 @@ export default function NoteEditorClient({
       onFolderChange={handleFolderChange}
       onDelete={handleDelete}
       isDeleting={isDeleting}
+      onSummarize={currentNoteId ? handleSummarize : undefined}
     />
   );
 }
