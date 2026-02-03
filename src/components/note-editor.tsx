@@ -91,6 +91,8 @@ export default function NoteEditor({
   const [showAISidebar, setShowAISidebar] = useState(false);
   const [aiSummary, setAiSummary] = useState<any>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(384); // 96 * 4 = 384px (w-96)
+  const [isResizing, setIsResizing] = useState(false);
   const router = useRouter();
 
   const editor = useEditor({
@@ -210,6 +212,37 @@ export default function NoteEditor({
       setIsGeneratingSummary(false);
     }
   };
+
+  // Handle sidebar resizing
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      const newWidth = window.innerWidth - e.clientX;
+      // Constrain width between 300px and 600px
+      const constrainedWidth = Math.max(300, Math.min(600, newWidth));
+      setSidebarWidth(constrainedWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isResizing]);
 
   const MenuButton = ({ 
     onClick, 
@@ -502,10 +535,12 @@ export default function NoteEditor({
       {/* Editor Content with Sidebar */}
       <div className="flex-1 flex overflow-hidden">
         {/* Main Editor */}
-        <div className={cn(
-          "flex-1 overflow-y-auto transition-all duration-300",
-          showAISidebar ? "mr-96" : ""
-        )}>
+        <div 
+          className="flex-1 overflow-y-auto transition-all duration-150"
+          style={{ 
+            marginRight: showAISidebar ? `${sidebarWidth}px` : '0'
+          }}
+        >
           <div className="container mx-auto px-4 py-8 max-w-4xl">
             <Card className="border-none shadow-none">
               <EditorContent editor={editor} />
@@ -515,7 +550,18 @@ export default function NoteEditor({
 
         {/* AI Sidebar */}
         {showAISidebar && (
-          <div className="fixed right-0 top-0 h-full w-96 bg-muted/30 backdrop-blur-sm border-l shadow-lg overflow-y-auto z-40">
+          <div 
+            className="fixed right-0 top-0 h-full bg-muted/30 backdrop-blur-sm border-l shadow-lg overflow-y-auto z-40"
+            style={{ width: `${sidebarWidth}px` }}
+          >
+            {/* Resize Handle */}
+            <div
+              className={cn(
+                "absolute left-0 top-0 bottom-0 w-1 hover:w-2 bg-border hover:bg-primary cursor-col-resize transition-all z-50",
+                isResizing && "w-2 bg-primary"
+              )}
+              onMouseDown={handleMouseDown}
+            />
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
