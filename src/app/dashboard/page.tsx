@@ -8,6 +8,7 @@ import { FolderIcon, FileTextIcon, PlusIcon, ClockIcon, ArrowRightIcon } from "l
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Chatbot } from "@/components/chatbot";
 
 export default async function DashboardPage() {
   // 1. AUTH CHECK
@@ -209,6 +210,16 @@ export default async function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* AI Chatbot */}
+      <Chatbot 
+        notes={recentNotes.map(note => ({
+          id: note.id,
+          title: note.title,
+          createdAt: note.createdAt || new Date(),
+        }))}
+        isLoggedIn={!!user}
+      />
     </div>
   );
 }

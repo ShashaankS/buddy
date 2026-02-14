@@ -1,5 +1,5 @@
-import { pgTable, text, timestamp, uuid, jsonb, boolean, integer } from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
+import { pgTable, text, timestamp, uuid, jsonb, boolean, integer, vector, index } from 'drizzle-orm/pg-core'
+import { relations, sql } from 'drizzle-orm'
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey(),
@@ -63,12 +63,48 @@ export const decks = pgTable('decks', {
   createdAt: timestamp('created_at').defaultNow(),
 })
 
+// Note embeddings for RAG
+export const noteEmbeddings = pgTable('note_embeddings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  noteId: uuid('note_id').references(() => notes.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  embedding: vector('embedding', { dimensions: 768 }), // Gemini embedding dimensions
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  embeddingIndex: index('embedding_index').using('hnsw', table.embedding.op('vector_cosine_ops')),
+}))
+
+// Chat sessions
+export const chatSessions = pgTable('chat_sessions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+// Chat messages
+export const chatMessages = pgTable('chat_messages', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  sessionId: uuid('session_id').references(() => chatSessions.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  role: text('role').notNull(), // 'user' or 'assistant'
+  content: text('content').notNull(),
+  contextNoteIds: uuid('context_note_ids').array(), // Notes used for context
+  createdAt: timestamp('created_at').defaultNow(),
+})
+
 // Define relations
 export const usersRelations = relations(users, ({ many }) => ({
   notes: many(notes),
   folders: many(folders),
   flashcards: many(flashcards),
   decks: many(decks),
+  noteEmbeddings: many(noteEmbeddings),
+  chatSessions: many(chatSessions),
+  chatMessages: many(chatMessages),
 }))
 
 export const notesRelations = relations(notes, ({ one, many }) => ({
@@ -81,4 +117,35 @@ export const notesRelations = relations(notes, ({ one, many }) => ({
     references: [folders.id],
   }),
   flashcards: many(flashcards),
+  embeddings: many(noteEmbeddings),
+}))
+
+export const noteEmbeddingsRelations = relations(noteEmbeddings, ({ one }) => ({
+  note: one(notes, {
+    fields: [noteEmbeddings.noteId],
+    references: [notes.id],
+  }),
+  user: one(users, {
+    fields: [noteEmbeddings.userId],
+    references: [users.id],
+  }),
+}))
+
+export const chatSessionsRelations = relations(chatSessions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [chatSessions.userId],
+    references: [users.id],
+  }),
+  messages: many(chatMessages),
+}))
+
+export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
+  session: one(chatSessions, {
+    fields: [chatMessages.sessionId],
+    references: [chatSessions.id],
+  }),
+  user: one(users, {
+    fields: [chatMessages.userId],
+    references: [users.id],
+  }),
 }))
