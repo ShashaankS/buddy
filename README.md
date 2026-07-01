@@ -136,15 +136,3 @@ npm run dev
 ```
 
 Open `http://localhost:3000`.
-
----
-
-## Repository Notes
-
-This documentation reflects the current implementation on `main` at the time of update. As AI features evolve (e.g., embedding refresh jobs, richer metadata, improved ranking), keep this README’s RAG section in sync with code paths under:
-
-- `src/lib/embeddings.ts`
-- `src/lib/rag-utils.ts`
-- `src/app/api/chat/route.ts`
-- `src/app/actions/ai.ts`
-- `src/db/schema.ts`
